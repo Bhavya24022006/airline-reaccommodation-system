@@ -2,7 +2,9 @@ import pandas as pd
 import heapq
 from collections import deque
 
- 
+# ==============================
+# LOAD DATA
+# ==============================
 
 flights = pd.read_csv("data/raw/flights.csv")
 passengers = pd.read_csv("data/raw/passengers.csv")
@@ -11,16 +13,22 @@ schedule_changes = pd.read_csv("data/raw/schedule_changes.csv")
 schedule = pd.read_csv("data/raw/schedules.csv")
 seats = pd.read_csv("data/raw/seat_inventory.csv")
 
- 
+# ==============================
+# PREPROCESS
+# ==============================
 
 schedule['departure_time'] = pd.to_datetime(schedule['departure_time'])
 schedule['arrival_time'] = pd.to_datetime(schedule['arrival_time'])
 
 flights = flights.merge(schedule, on='flight_id', how='left')
 flights = flights.merge(seats, on='flight_id', how='left')
- 
+
+# SINGLE SOURCE OF TRUTH FOR SEATS
 seat_left = dict(zip(flights['flight_id'], flights['available_seats']))
- 
+
+# ==============================
+# IMPACTED PASSENGERS
+# ==============================
 
 impacted_flights = schedule_changes['flight_id'].unique()
 impacted_pnr = pnr[pnr['flight_id'].isin(impacted_flights)]
@@ -28,7 +36,9 @@ impacted_pnr = pnr[pnr['flight_id'].isin(impacted_flights)]
 impacted = impacted_pnr.merge(passengers, on='passenger_id')
 impacted = impacted.merge(flights, on='flight_id')
 
- 
+# ==============================
+# PASSENGER PRIORITY
+# ==============================
 
 def passenger_priority(row):
     score = 0
@@ -45,7 +55,10 @@ def passenger_priority(row):
     return score
 
 impacted['priority'] = impacted.apply(passenger_priority, axis=1)
- 
+
+# ==============================
+# BUILD HEAP
+# ==============================
 
 heap = []
 TOP_K = 5
@@ -72,7 +85,9 @@ for i, row in impacted.iterrows():
         )
         heapq.heappush(heap, (-score, i, f['flight_id']))
 
- 
+# ==============================
+# DIRECT MATCHING
+# ==============================
 
 assigned_passengers = set()
 assignments = []
@@ -86,21 +101,27 @@ while heap:
     if seat_left[flight_id] <= 0:
         continue
 
-    
     assigned_passengers.add(p_idx)
     seat_left[flight_id] -= 1
 
     row = impacted.loc[p_idx]
+
+    delay = flights.loc[
+        flights['flight_id'] == flight_id, 'departure_time'
+    ].values[0] - row['departure_time']
 
     assignments.append({
         'pnr_id': row['pnr_id'],
         'passenger_id': row['passenger_id'],
         'old_flight': row['flight_id'],
         'new_flight': flight_id,
-        'type': 'direct'
+        'type': 'direct',
+        'reason': f"Direct | Priority={row['priority']} | Delay={delay}"
     })
 
- 
+# ==============================
+# BUILD GRAPH
+# ==============================
 
 graph = {}
 
@@ -110,7 +131,9 @@ for _, f in flights.iterrows():
         graph[src] = []
     graph[src].append(f)
 
- 
+# ==============================
+# MULTI-HOP BFS
+# ==============================
 
 def find_multi_hop(row, max_stops=2):
     start = row['source_airport']
@@ -130,17 +153,14 @@ def find_multi_hop(row, max_stops=2):
             continue
 
         for f in graph[airport]:
-           
             if seat_left[f['flight_id']] <= 0:
                 continue
 
-            
             if f['departure_time'] < curr_time + pd.Timedelta(minutes=30):
                 continue
 
             new_path = path + [f]
 
-             
             if f['destination_airport'] == end:
                 return new_path
 
@@ -153,7 +173,9 @@ def find_multi_hop(row, max_stops=2):
 
     return None
 
- 
+# ==============================
+# MULTI-HOP ASSIGNMENT
+# ==============================
 
 assigned_pnr = set([a['pnr_id'] for a in assignments])
 
@@ -164,7 +186,6 @@ for _, row in impacted.iterrows():
     path = find_multi_hop(row)
 
     if path:
-         
         valid = True
         for f in path:
             if seat_left[f['flight_id']] <= 0:
@@ -174,19 +195,23 @@ for _, row in impacted.iterrows():
         if not valid:
             continue
 
-       
         for f in path:
             seat_left[f['flight_id']] -= 1
+
+        route = " -> ".join([str(f['flight_id']) for f in path])
 
         assignments.append({
             'pnr_id': row['pnr_id'],
             'passenger_id': row['passenger_id'],
             'old_flight': row['flight_id'],
-            'new_flight': " -> ".join([str(f['flight_id']) for f in path]),
-            'type': 'multi_hop'
+            'new_flight': route,
+            'type': 'multi_hop',
+            'reason': f"Multi-hop | Stops={len(path)-1}"
         })
 
- 
+# ==============================
+# EXCEPTIONS
+# ==============================
 
 assigned_pnr = set([a['pnr_id'] for a in assignments])
 
@@ -196,22 +221,43 @@ for _, row in impacted.iterrows():
     if row['pnr_id'] not in assigned_pnr:
         exceptions.append(row)
 
- 
+# ==============================
+# SAVE OUTPUT
+# ==============================
 
 pd.DataFrame(assignments).to_csv(
-    "data/processed/final_assignments_correct.csv",
+    "data/processed/final_assignments_advanced.csv",
     index=False
 )
 
 pd.DataFrame(exceptions).to_csv(
-    "data/processed/exceptions_correct.csv",
+    "data/processed/exceptions_advanced.csv",
     index=False
 )
 
- 
+# ==============================
+# STATS
+# ==============================
 
-print("\n FINAL RESULTS (CORRECT VERSION):")
-print("Total impacted:", len(impacted))
-print("Assigned:", len(assignments))
-print("Unassigned:", len(exceptions))
-print("Success Rate:", round(len(assignments)/len(impacted)*100, 2), "%")
+total = len(impacted)
+assigned_count = len(assignments)
+unassigned_count = len(exceptions)
+
+print("\n🔥 FINAL RESULTS (ADVANCED VERSION):")
+print("Total impacted:", total)
+print("Assigned:", assigned_count)
+print("Unassigned:", unassigned_count)
+print("Success Rate:", round(assigned_count / total * 100, 2), "%")
+
+# ==============================
+# METRICS
+# ==============================
+
+direct_count = sum(1 for a in assignments if a['type'] == 'direct')
+multi_count = sum(1 for a in assignments if a['type'] == 'multi_hop')
+
+print("\n📊 SYSTEM METRICS:")
+print("Direct Assignments:", direct_count)
+print("Multi-hop Assignments:", multi_count)
+print("Multi-hop %:", round(multi_count / assigned_count * 100, 2), "%")
+print("Unassigned %:", round(unassigned_count / total * 100, 2), "%")
