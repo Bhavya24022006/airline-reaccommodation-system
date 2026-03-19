@@ -137,6 +137,9 @@ This project demonstrates how real-world optimization problems can be solved usi
 - Constraint-based decision making
 
 ---
+## 📌 Note
+The `data/processed/` folder contains generated outputs and is not stored in the repository.  
+Run the script to generate results.
 
 ## Author
 Bhavya
