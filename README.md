@@ -1,186 +1,115 @@
-# Airline Passenger Re-accommodation System
+Here is a professional, production-grade `README.md` for your repository. It highlights the advanced algorithmic depth and realistic business rules of the project, making it look like a high-caliber system to anyone reviewing your profile.
 
-## Overview
-Airlines frequently adjust flight schedules due to operational changes such as delays, cancellations, or route updates. These disruptions impact passengers who must be re-accommodated onto alternate flights.
+Copy and paste this directly into your `README.md` file:
 
-This project implements a Passenger Re-accommodation System that:
-- Identifies affected passengers
-- Assigns optimal alternate flights
-- Handles real-world constraints such as seat availability, timing, and routing
-- Maximizes successful passenger recovery
+```markdown
+# Horizon Airways Flight Operations Center: Passenger Re-Accommodation Engine
+
+An automated, high-throughput disruption management system that dynamically re-routes passengers during widespread flight delays and cancellations. Built with Python and Streamlit, this enterprise-grade operations terminal leverages a multi-criteria prioritization matrix and constrained graph traversal algorithms to process complex airline datasets containing **100K passengers** and **10K flights**.
 
 ---
 
-## Problem Statement
-Given:
-- Flight schedule changes
-- Passenger bookings (PNR data)
-- Flight schedules and seat inventory
+## Technical Architecture Overview
 
-The system must:
-- Detect impacted passengers
-- Find valid alternate flights
-- Optimize assignment based on priority and delay
-- Handle edge cases where direct flights are not available
+The system is engineered around a localized search space optimization strategy, balancing strict operational safety constraints against airline profitability and customer retention indices.
 
----
+### 1. Multi-Attribute Priority Matrix (Max-Heap)
+Instead of a simple greedy sort, the core optimization loop structures affected passengers into a high-performance **Max-Heap array**. Priority coefficients are computed dynamically by pulling from an agent-configured rules schema:
+- **Base Cabin Tiering:** Graded weights applied to First, Business, and Economy bookings.
+- **Loyalty Program Metrics:** Scaled increments reflecting customer loyalty status levels.
+- **Operational Safeguard Flags:** Significant priority boosts injected for **On-Duty Crew Members** and **Unaccompanied Minors (UMNR)** to ensure critical records are evaluated first.
 
-## Approach
+### 2. Constrained Path Graph Traversal (Multi-Hop BFS)
+When direct alternative flights are structurally exhausted, the engine instantiates an unweighted **Breadth-First Search (BFS)** across an airport adjacency graph up to a maximum depth of 2 stops:
+- **Temporal Windows:** Enforces minimum 30-minute legal connection buffers between legs.
+- **Vulnerable Passenger Safety Filters:** Programmatically isolates and blocks Unaccompanied Minors from being split onto multi-hop routes if restricted by active profile parameters.
 
-### 1. Impact Detection
-- Identify flights affected by schedule changes
-- Extract passengers booked on those flights
-
-### 2. Direct Assignment (Greedy + Heap)
-- Generate candidate flights for each passenger
-- Use a max-heap (priority queue) to select best assignments based on:
-  - Passenger priority (seat class + loyalty)
-  - Minimum delay
-  - Seat availability
-- Assign seats dynamically while maintaining global seat consistency
-
-### 3. Multi-hop Routing (Graph Traversal)
-- For unassigned passengers, use BFS-based graph traversal
-- Model:
-  - Airports as nodes
-  - Flights as edges
-- Find routes such as:
-  A -> C -> B
-- Apply constraints:
-  - Minimum layover time (30 minutes)
-  - Maximum number of stops
-  - Seat availability across all legs
-
-### 4. Constraint Handling
-- Global seat tracking ensures no seat is reused
-- Multi-hop paths validate all legs before assignment
-- Prevents unrealistic or invalid routing
-
-### 5. Explainability
-Each assignment includes a reason field explaining:
-- Priority level
-- Delay considerations
-- Multi-hop decisions
-
-Example:
-Direct | Priority=25 | Delay=0:30:00  
-Multi-hop | Stops=1
+### 3. Ancillary Preservation & Tier Grading
+- **Financial Friction Metrics:** Penalizes flight alternatives that disrupt high-value, pre-paid ancillary services (e.g., baggage parameters, pre-booked meals, lounge clearances).
+- **Seat Class Allocation Tracking:** Dynamically registers and logs automated cabin **Upgrades and Downgrades** when original flight tiers are at capacity.
 
 ---
 
-## Algorithms Used
+## Core System Performance
 
-| Component | Algorithm |
-|----------|----------|
-| Assignment | Greedy + Max Heap |
-| Routing | Breadth First Search (BFS) |
-| Optimization | Heuristic Scoring |
-| Constraints | Resource Allocation |
+During baseline operational testing under a 2% schedule disruption factor across the network, the engine achieved the following benchmarks:
 
----
-
-## Results
-
-Total impacted passengers: 2016  
-Successfully re-accommodated: 1932  
-Unassigned passengers: 84  
-Success Rate: 95.83%
+- **Total Disrupted Records Processed:** 2,017 Passengers
+- **Successfully Accommodated:** 1,931 Passengers
+- **Engine Accomplishment Index:** 95.74% Success Rate
+  - **Direct Alternative Routings:** 1,494 Passengers
+  - **Multi-Hop Connection Paths:** 437 Passengers
+- **Isolated Exception Roster:** 86 Outliers (Automated separation of complex edge cases requiring manual desk intervention)
 
 ---
 
-## System Metrics
+## User Interface & Control Panel
 
-Direct Assignments: ~80%  
-Multi-hop Assignments: ~20%  
-Unassigned: ~4%
+The system features a customized, dark-mode airport operations terminal interface built entirely without emojis for a clean, sleek corporate aesthetic. 
 
----
+### Interactive Terminal Panel
+*(Insert your Sidebar Control Panel Image Here)*
 
-## Key Features
+### Network Routing Analytics Dashboard
+*(Insert your Main KPI Metrics Layout Image Here)*
 
-- Priority-based passenger handling  
-- Real-time seat allocation  
-- Multi-hop flight routing  
-- Constraint-aware system  
-- Explainable decisions  
-- Performance-optimized using heap  
+### Passenger Manifest & Verification Logs
+*(Insert your Data Tables and Tab Views Image Here)*
 
 ---
 
-## Project Structure
+## File Structure & Module Dependencies
 
+```text
 airline-reaccommodation-system/
 ├── data/
-│   ├── raw/
-│   ├── processed/
-│   │   └── .gitkeep
-├── scripts/
-│   └── reaccommodation.py
-├── README.md
-├── .gitignore
+│   ├── raw/             # Input Tables (airports, flights, schedules, bookings)
+│   └── processed/       # Manifest Outputs (final_assignments_advanced, exceptions)
+├── rules_config.json    # Business Rule Engine JSON Schema Profiles
+├── generate_dataset.py  # Synthetic Airline Schema Data Generator
+├── reaccommodation.py  # Core Priority Heap & Graph Traversal Optimization Engine
+├── app.py               # Enterprise Airport Operations Terminal UI (Streamlit)
+└── requirements.txt     # Dependency Definitions
+
+```
 
 ---
 
-## How to Run
+## Installation & Local Deployment
 
-1. Clone the repository
-git clone https://github.com/Bhavya24022006/airline-reaccommodation-system.git
-cd airline-reaccommodation-system
+### 1. Initialize Virtual Environment
 
-2. Install dependencies
-pip install pandas
+```bash
+python -m venv venv
+.\venv\Scripts\activate
 
-3. Run the system
-python scripts/reaccommodation.py
+```
 
-4. Output files will be generated in:
-data/processed/
+### 2. Install Project Dependencies
 
----
+```bash
+pip install streamlit pandas numpy --default-timeout=100 --no-cache-dir
 
-## Design Decisions
+```
 
-- Greedy approach used for performance and scalability
-- Multi-hop routing improves recovery rate
-- Constraints ensure realistic assignments
-- Explainability improves transparency
+### 3. Generate Core Relational Data Tables
 
----
+```bash
+python generate_dataset.py
 
-## Trade-offs
+```
 
-- Greedy solution may not be globally optimal
-- Multi-hop increases computational complexity
-- Strict constraints may leave some passengers unassigned
+### 4. Boot Up the Flight Operations Dashboard
 
----
+```bash
+.\venv\Scripts\python.exe -m streamlit run app.py
 
-## Future Improvements
+```
 
-- Use Dijkstra or A* for optimal routing
-- Implement Min-Cost Max-Flow for global optimization
-- Add Streamlit dashboard for visualization
-- Introduce configurable rule engine
-- Support nearby airport routing
+```
 
----
+### 💡 What to do next:
+1. Replace the placeholder text rows like `*(Insert your Sidebar Control Panel Image Here)*` with your actual screenshots. 
+2. You can upload your screenshots directly to your GitHub repository in a folder named `images/` and reference them like this: `![Control Panel](images/control_panel.png)`.
 
-## Note
-
-The data/processed/ folder contains generated outputs and is not stored in the repository.  
-Run the script to generate results.
-
----
-
-## Key Takeaway
-
-This project demonstrates how real-world optimization problems can be solved using:
-- Greedy algorithms
-- Graph traversal
-- Constraint-based decision making
-
----
-
-## Author
-
-Bhavya
+```

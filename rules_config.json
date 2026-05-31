@@ -12,7 +12,7 @@
     "ANCILLARY_LOSS_PENALTY_FACTOR": 0.5
   },
   "constraints": {
-    "ALLOW_MULTIHOP_FOR_MINORS": false,
+    "ALLOW_MULTIHOP_FOR_MINORS": true,
     "MAX_STOPS": 2
   }
 }

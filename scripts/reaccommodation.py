@@ -129,7 +129,16 @@ while heap:
     delay = flights.loc[
         flights['flight_id'] == flight_id, 'departure_time'
     ].values[0] - row['departure_time']
-
+    new_flight_row = flights[flights['flight_id'] == flight_id].iloc[0]
+    original_class = row['seat_class']
+    
+    # Determine the structural action taken based on seat inventory capacity proxies
+    if original_class == "ECONOMY" and new_flight_row['total_seats'] > 180:
+        class_action = "UPGRADE"
+    elif original_class in ["FIRST", "BUSINESS"] and new_flight_row['total_seats'] <= 150:
+        class_action = "DOWNGRADE"
+    else:
+        class_action = "CLASS_MATCHED"
     assignments.append({
         'pnr_id': row['pnr_id'],
         'passenger_id': row['passenger_id'],
